@@ -1,28 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "4.49.0"
-    }
-  }
-}
-
-provider "aws" {
-  # Configuration options
-  profile = "default"
-  region  = "us-east-1"
-}
-
-provider "aws" {
-  region = "eu-west-1"
-  profile = "default"
-  alias = "eu"
-}
-
-variable "instance_type" {
-  type = string
-
-}
 
 locals {
   project_name = "Celarie"
@@ -94,12 +69,4 @@ resource "aws_instance" "my_instance" {
   tags = {
     Name = "HelloWorld - ${local.project_name}"
   }
-}
-
-output "instance_public_ip_address" {
-  value = aws_instance.my_instance.public_ip
-}
-
-output "instance_private_ip_address" {
-  value = aws_instance.my_instance.private_ip
 }
