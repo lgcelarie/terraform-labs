@@ -44,12 +44,50 @@ resource "aws_key_pair" "my_instance_key" {
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDDO+OiRBjQ50EDpP1u5yQsz4UJb31/reDpZw5Rm68XB9o0C2eUHSB+VfYV++YhEkea/M8BtQ3wUVgCEESU3Eep9SY6YCso33yXLrqOkpAHWdoHQYJBAJwsF8xBwwF1/U7I2ykpUwLQm9LgU4Irgk3Tl8cwNqCNJ2AmnADSQ9Imb+1Nm71KKgJTHR3GCnQ+70OtP1GAf2r56F8+WA1vtiS8flXVR4ZVUa2hmJ5uFuBB6h39ktrnXrfU2Kgvrkw0mprxjjtdo3ndhJa/cWthbnyLUYXtMH8XAbDAjHWBcVKo037P9BfqwexVdUcpyMNvPrbJx0IuOpR9QQPVWK5ke4ijjfBwaHsOw5pLio+/05+SPMnqDtgymJFBiJQCggoXaLA23aXAZ3q3DM4Qj/2rU2Kiuh4xOQewhtRlXzhR28EQoWQ4Fsw/YbjHNs7QxBCmICMbAvb+DM7PQeaMpRrog19OQu7vTOYFm9+Zshegq2rVWl4rYxWO+k738yy48HIHB7k="
 }
 
+# data "template_file" "user_data" {
+#     template = file("./userdata.yaml")
+# }
+
+resource "aws_security_group" "allow_http_myserver" {
+  name        = "allow_http_myserver"
+  description = "Allow HTTP inbound traffic"
+  vpc_id      = aws_vpc.terraform_vpc.id
+
+  ingress {
+    description      = "HTTP from VPC"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = []
+  }
+
+  ingress {
+    description      = "SSH from Host"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["190.86.109.5/32"]
+    ipv6_cidr_blocks = []
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+}
+
 resource "aws_instance" "my_instance" {
   ami                         = "ami-0b5eea76982371e91"
-  instance_type               = "t2.mmicro"
+  instance_type               = "t2.micro"
   associate_public_ip_address = true
   subnet_id = aws_subnet.terraform_subnet.id
   key_name = aws_key_pair.my_instance_key.key_name
+  security_groups = [ aws_security_group.allow_http_myserver.id ]
+  user_data = templatefile("./userdata.yaml", {})
 
   tags = {
     Name = "ProvisionersInstance"
