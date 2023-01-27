@@ -67,7 +67,7 @@ resource "aws_security_group" "allow_http_myserver" {
     from_port        = 22
     to_port          = 22
     protocol         = "tcp"
-    cidr_blocks      = ["190.86.109.5/32"]
+    cidr_blocks      = ["190.86.33.128/32"]
     ipv6_cidr_blocks = []
   }
 
@@ -80,6 +80,20 @@ resource "aws_security_group" "allow_http_myserver" {
   }
 }
 
+resource "aws_internet_gateway" "terraform_gw" {
+  vpc_id = aws_vpc.terraform_vpc.id
+
+  tags = {
+    Name = "TerraformInternetGateway"
+  }
+}
+
+resource "aws_route" "terraform_def_route" {
+  route_table_id = aws_vpc.terraform_vpc.default_route_table_id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id = aws_internet_gateway.terraform_gw.id
+}
+
 resource "aws_instance" "my_instance" {
   ami                         = "ami-0b5eea76982371e91"
   instance_type               = "t2.micro"
@@ -87,7 +101,11 @@ resource "aws_instance" "my_instance" {
   subnet_id = aws_subnet.terraform_subnet.id
   key_name = aws_key_pair.my_instance_key.key_name
   security_groups = [ aws_security_group.allow_http_myserver.id ]
-  user_data = templatefile("./userdata.yaml", {})
+  user_data = file("./userdata.yaml")
+
+  depends_on = [
+    aws_internet_gateway.terraform_gw
+  ]
 
   tags = {
     Name = "ProvisionersInstance"
