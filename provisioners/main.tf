@@ -1,12 +1,12 @@
 terraform {
-  backend "remote" {
-    organization = "lgcelarie"
-    hostname = "app.terraform.io"
+  # backend "remote" {
+  #   organization = "lgcelarie"
+  #   hostname = "app.terraform.io"
 
-    workspaces {
-      name = "provisioners-wp"
-    }
-  }
+  #   workspaces {
+  #     name = "provisioners-wp"
+  #   }
+  # }
 
   required_providers {
     aws = {
@@ -103,6 +103,34 @@ resource "aws_instance" "my_instance" {
   security_groups = [ aws_security_group.allow_http_myserver.id ]
   user_data = file("./userdata.yaml")
 
+  provisioner "local-exec" {
+    command = "echo ${self.private_ip} >> private_ips.txt"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "echo ${self.private_ip} >> /home/ec2-user/private_ips.txt"
+    ]
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      host = self.private_ip
+      # private_key = file("file loecation")
+    }
+  }
+
+  provisioner "file" {
+    content = "./test_file"
+    destination = "/tmp/file.log"
+
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      host = self.private_ip
+      # private_key = file("file loecation")
+    }
+  }
+
   depends_on = [
     aws_internet_gateway.terraform_gw
   ]
@@ -111,3 +139,7 @@ resource "aws_instance" "my_instance" {
     Name = "ProvisionersInstance"
   }
 }
+
+  output "instance_public_ip" {
+    value = aws_instance.my_instance.public_ip
+  }
