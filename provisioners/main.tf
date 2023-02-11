@@ -10,7 +10,7 @@ terraform {
 
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "4.51.0"
     }
   }
@@ -89,19 +89,19 @@ resource "aws_internet_gateway" "terraform_gw" {
 }
 
 resource "aws_route" "terraform_def_route" {
-  route_table_id = aws_vpc.terraform_vpc.default_route_table_id
+  route_table_id         = aws_vpc.terraform_vpc.default_route_table_id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id = aws_internet_gateway.terraform_gw.id
+  gateway_id             = aws_internet_gateway.terraform_gw.id
 }
 
 resource "aws_instance" "my_instance" {
   ami                         = "ami-0b5eea76982371e91"
   instance_type               = "t2.micro"
   associate_public_ip_address = true
-  subnet_id = aws_subnet.terraform_subnet.id
-  key_name = aws_key_pair.my_instance_key.key_name
-  security_groups = [ aws_security_group.allow_http_myserver.id ]
-  user_data = file("./userdata.yaml")
+  subnet_id                   = aws_subnet.terraform_subnet.id
+  key_name                    = aws_key_pair.my_instance_key.key_name
+  security_groups             = [aws_security_group.allow_http_myserver.id]
+  user_data                   = file("./userdata.yaml")
 
   provisioner "local-exec" {
     command = "echo ${self.private_ip} >> private_ips.txt"
@@ -120,7 +120,7 @@ resource "aws_instance" "my_instance" {
   }
 
   provisioner "file" {
-    content = "./test_file"
+    content     = "./test_file"
     destination = "/tmp/file.log"
 
     connection {
@@ -140,6 +140,16 @@ resource "aws_instance" "my_instance" {
   }
 }
 
-  output "instance_public_ip" {
-    value = aws_instance.my_instance.public_ip
+resource "null_resource" "status" {
+  provisioner "local-exec" {
+    command = "aws ec2 wait instance-status-pok --instance-ids ${aws_instance.my_instance.id}"
   }
+
+  depends_on = [
+    aws_instance.my_instance
+  ]
+}
+
+output "instance_public_ip" {
+  value = aws_instance.my_instance.public_ip
+}
