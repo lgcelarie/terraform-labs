@@ -9,7 +9,7 @@ terraform {
 
 provider "aws" {
   profile = "default"
-  region  = "us-east-2"
+  region  = "us-east-1"
 }
 
 variable "instance_type" {
@@ -52,8 +52,19 @@ resource "aws_network_interface" "my_instance_eni" {
   }
 }
 
+data "aws_ami" "ami_datasource" {
+  most_recent      = true
+  owners           = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-kernel-5.10-hvm-2.0.20221210.1-x86_64-gp2"]
+  }
+}
+
 resource "aws_instance" "my_instance" {
-  ami = "ami-0b5eea76982371e91"
+  # ami = "ami-0b5eea76982371e91"
+  ami = data.aws_ami.ami_datasource.image_id
   # provider = aws.eu
   instance_type               = var.instance_type
   associate_public_ip_address = true
