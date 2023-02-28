@@ -1,3 +1,15 @@
 NOT INTENDED FOR USE
 
 just a terraform example on public registry
+
+USAGE
+```hcl
+module "apache-example" {
+  source = ".//terraform-aws-apache-example"
+  vpc_id = "YOUR VPC ID"
+
+  access_ip = "YOUR ACCESS IP"
+
+  public_key = "YOUR PUBLIC KEY"
+}
+```

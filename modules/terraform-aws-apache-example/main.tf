@@ -27,6 +27,8 @@ resource "aws_instance" "my_instance" {
   instance_type               = "t2.micro"
   associate_public_ip_address = true
   subnet_id                   = aws_subnet.terraform_subnet.id
+  security_groups = [ aws_security_group.allow_tls.id ]
+  user_data                   = file("${abspath(path.module)}/userdata.yaml")
 
   tags = {
     Name = "Server-ApacheTF"
@@ -76,8 +78,4 @@ resource "aws_security_group" "allow_tls" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
-output "public_ip" {
-  value = aws_instance.my_instance[1].public_ip
 }
